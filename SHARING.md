@@ -9,7 +9,7 @@
    - your wallpaper, named `wallpaper.hlsl`, `wallpaper.mp4`, `wallpaper.gif`, `wallpaper.png` or `wallpaper.jpg`;
    - an `info.json` describing it (see below).
 5. Open a **pull request**. The checks run by themselves within a few minutes and show their result, with a picture of your wallpaper, on the pull request.
-6. A maintainer looks at it and adds it, or tells you what to change.
+6. A maintainer looks at it and adds it, or tells you what to change. Once added, it appears in livewall after the maintainer has signed it (usually the same day).
 
 ## info.json
 

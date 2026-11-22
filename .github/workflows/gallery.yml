@@ -117,7 +117,7 @@ jobs:
       - name: Build the gallery site
         if: github.event_name != 'pull_request'
         shell: pwsh
-        run: tools\build-index.ps1 -Checked out -Staged staged -Site site
+        run: tools\build-index.ps1 -Checked out -Staged staged -Site site -Live https://manndevani.github.io/livewall-gallery/
 
       - uses: actions/upload-artifact@v4
         if: github.event_name != 'pull_request'

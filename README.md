@@ -6,9 +6,9 @@ Everything here is free to download and free to share. There are no accounts, no
 
 ## Getting a wallpaper
 
-Soon: open livewall's settings and pick one from the **Community** tab.
+Open livewall's settings, choose the **Community** tab and click a wallpaper. livewall downloads it, checks its fingerprint and puts it on your desktop (or on the Lock screen tab, if that tab is open). This needs a livewall version newer than 0.2.1.
 
-Until then: open a folder under [`wallpapers/`](wallpapers), download the wallpaper file, and add it in livewall with **Settings → Add wallpaper**.
+You can also open a folder under [`wallpapers/`](wallpapers), download the wallpaper file, and add it with **Settings → Add wallpaper**.
 
 ## Sharing your own
 

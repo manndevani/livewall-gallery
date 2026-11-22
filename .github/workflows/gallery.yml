@@ -2,17 +2,21 @@
 #
 # Pull request: checks only the wallpaper folders it changes, and shows the
 # result with a picture of each wallpaper (download "previews" from the run).
-# Push to main: checks every wallpaper again and publishes the ones that
-# pass to GitHub Pages (index.json, files, previews), which livewall reads.
+# Push to main (and every 6 hours, to count likes): checks every wallpaper
+# again and publishes the ones that pass to GitHub Pages: index.json, the
+# files and previews that livewall reads, and the gallery web page.
 #
 # Nothing here has secrets or write access while checking: a pull request
-# from someone else runs with a read-only token.
+# from someone else runs with a read-only token. Only the publish job, which
+# never runs for pull requests, may write (Pages, and the likes posts).
 name: gallery
 
 on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: '17 */6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -111,26 +115,46 @@ jobs:
           path: out
 
       - name: Build the gallery site
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         shell: pwsh
         run: tools\build-index.ps1 -Checked out -Staged staged -Site site
 
-      - uses: actions/upload-pages-artifact@v3
-        if: github.event_name == 'push'
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
         with:
+          name: site
           path: site
 
   publish:
-    name: Publish to GitHub Pages
+    name: Count likes and publish to GitHub Pages
     needs: check
-    if: github.event_name == 'push'
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     permissions:
+      contents: read
+      discussions: write
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: site
+
+      - name: Count likes
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tools/likes.ps1 -Site site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
       - id: deploy
         uses: actions/deploy-pages@v4

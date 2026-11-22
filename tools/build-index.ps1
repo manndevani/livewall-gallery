@@ -10,6 +10,8 @@ previews). Only wallpapers that passed are published. Media files come from
 site\index.json lists every wallpaper with the SHA-256 of its file and of
 its preview; livewall refuses a download that doesn't match.
 site\w\<id>\wallpaper.<ext> and site\w\<id>\preview.png are the files.
+The web page in web\ is copied next to them. Likes are added afterwards by
+likes.ps1 (it needs the GitHub token, so it runs in the publish job).
 #>
 param(
     [Parameter(Mandatory = $true)][string]$Checked,
@@ -23,6 +25,8 @@ function Get-Sha256([string]$path) { (Get-FileHash -Algorithm SHA256 -LiteralPat
 
 Remove-Item -Recurse -Force $Site -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force "$Site\w" | Out-Null
+$Site = (Resolve-Path $Site).Path   # .NET calls below don't know PowerShell's current folder
+Copy-Item "$Root\web\*" $Site   # the gallery web page, which reads index.json
 $results = Get-Content -Raw (Join-Path $Checked 'results.json') | ConvertFrom-Json
 $list = @()
 foreach ($r in @($results) | Where-Object { $_.ok -and $_.kind } | Sort-Object id) {

@@ -35,6 +35,8 @@ Every wallpaper is checked by a computer and then by a person before anyone can 
 
 Found something wrong with a wallpaper? [Open an issue](../../issues) and it will be looked at quickly.
 
+Fan art (tagged `fan-art`) is made by the people who shared it; the characters and worlds belong to their makers. If you own one and want a wallpaper taken down, [open an issue](../../issues) and it will be removed.
+
 ## For maintainers
 
 - `tools/check.ps1` runs the checks on your own PC: `powershell tools\check.ps1 -Livewall <path to livewall.exe>`.

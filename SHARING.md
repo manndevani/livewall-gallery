@@ -29,11 +29,16 @@
 | `author` | Your GitHub name. |
 | `description` | Up to 200 characters. |
 | `tags` | Up to 5, each lowercase, up to 20 characters. |
-| `license` | `MIT`, `CC0-1.0` or `CC-BY-4.0`. Everyone may use and share your wallpaper under it. |
+| `license` | `MIT`, `CC0-1.0` or `CC-BY-4.0`. Everyone may use and share your wallpaper under it (for fan art: your own work in it; see the rules). |
 
 ## Rules
 
-- **Only your own work.** You made it, or you have the right to share it under the license you chose. No art, characters, logos or footage from games, films, brands or other people.
+- **Only your own work.** You made it, or you have the right to share it under the license you chose. No art, logos or footage taken from games, films, brands or other people: no screenshots, game clips, official artwork or rips.
+- **Fan art is welcome** if you drew, painted, animated or modelled it yourself: a character or place from a game or film, in your own work. Rules for fan art:
+  - nothing copied or traced from the game or film, and no official logos;
+  - add the tag `fan-art`, and name the game or film in the description;
+  - your license covers only your own work; the characters still belong to their makers;
+  - if the makers ask for it to be taken down, it will be.
 - **Fine for everyone.** Nothing sexual, violent, hateful or shocking, and no flashing that could harm people with photosensitive epilepsy.
 - **Only the two files.** No other files, folders or changes elsewhere in the gallery.
 - **Size limits:** shader 64 KB, picture 10 MB, GIF 15 MB, video 50 MB and at most 2 minutes. Videos lose their sound.

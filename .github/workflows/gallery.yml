@@ -1,0 +1,136 @@
+# The gallery's checks, and publishing.
+#
+# Pull request: checks only the wallpaper folders it changes, and shows the
+# result with a picture of each wallpaper (download "previews" from the run).
+# Push to main: checks every wallpaper again and publishes the ones that
+# pass to GitHub Pages (index.json, files, previews), which livewall reads.
+#
+# Nothing here has secrets or write access while checking: a pull request
+# from someone else runs with a read-only token.
+name: gallery
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gallery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Scan and rebuild files
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install ClamAV and ffmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clamav ffmpeg
+          sudo systemctl stop clamav-freshclam || true
+          sudo freshclam --quiet
+
+      - name: Check the changed folders, scan for viruses, rebuild media
+        env:
+          # Someone else's pull request may only touch wallpapers/.
+          OUTSIDE_OK: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+        run: |
+          outside=0
+          [ "$OUTSIDE_OK" = true ] && outside=1
+          bash tools/prepare.sh "$BASE" "$outside" staged
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: staged
+          path: staged
+
+  check:
+    name: Check with livewall
+    needs: prepare
+    runs-on: windows-latest
+    outputs:
+      count: ${{ steps.check.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get livewall
+        uses: actions/checkout@v4
+        with:
+          repository: manndevani/LiveWallpaper
+          path: livewall
+
+      - name: Build livewall
+        shell: cmd
+        run: cd livewall && call build.bat
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: staged
+          path: staged
+
+      - name: Check
+        id: check
+        shell: pwsh
+        run: |
+          $ids = @(Get-Content staged\ids.txt | Where-Object { $_ })
+          "count=$($ids.Count)" >> $env:GITHUB_OUTPUT
+          if (-not $ids.Count) {
+            "No wallpaper folders changed." >> $env:GITHUB_STEP_SUMMARY
+            New-Item -ItemType Directory -Force out | Out-Null
+            '[]' | Set-Content out\results.json
+            exit 0
+          }
+          & tools\check.ps1 -Livewall livewall\build\livewall.exe -Ids $ids -Staged staged -Out out
+          $code = $LASTEXITCODE
+          $rows = Get-Content -Raw out\results.json | ConvertFrom-Json
+          "| Wallpaper | Result | Type | Work (x reference) | Problems |" >> $env:GITHUB_STEP_SUMMARY
+          "|---|---|---|---|---|" >> $env:GITHUB_STEP_SUMMARY
+          foreach ($r in @($rows)) {
+            $result = if ($r.ok) { 'pass' } else { 'FAIL' }
+            "| $($r.id) | $result | $($r.kind) | $($r.ratio) | $(@($r.problems) -join '<br>') |" >> $env:GITHUB_STEP_SUMMARY
+          }
+          "`nPictures of each wallpaper: download **previews** below." >> $env:GITHUB_STEP_SUMMARY
+          if ($code) {
+            Get-Content "$env:APPDATA\livewall\livewall.log" -ErrorAction SilentlyContinue | Select-Object -Last 30
+          }
+          exit $code
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: previews
+          path: out
+
+      - name: Build the gallery site
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: tools\build-index.ps1 -Checked out -Staged staged -Site site
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'push'
+        with:
+          path: site
+
+  publish:
+    name: Publish to GitHub Pages
+    needs: check
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
